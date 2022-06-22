@@ -31,6 +31,17 @@
 		console.log("Something went wrong!");
 		});
 	}
+
+	let socket = new WebSocket('ws://localhost:8001/ws/');
+	let timer = null;
+	socket.onopen = () => {
+		timer = setInterval(() => {
+			socket.send('hello');
+		}, 1000);
+	};
+	socket.onclose = socket.onerror = () => {
+		clearInterval(timer);
+	};
 	</script>
 </body>
 </html>
