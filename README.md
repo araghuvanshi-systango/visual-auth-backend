@@ -1,2 +1,1 @@
-# visual-auth-backend
-Do visual authentication.
+# blog_app
