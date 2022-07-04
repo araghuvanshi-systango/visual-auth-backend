@@ -1,34 +1,38 @@
-from flask import Flask,render_template,Response
+import base64
+from io import StringIO
+import io
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+from PIL import Image
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-
-app=Flask(__name__)
-camera=cv2.VideoCapture(1)
-camera.isOpened()
-
-def generate_frames():
-    while True:
-        success,frame=camera.read()
-        plt.imshow(frame.tolist())
-        plt.show()
-        if not success:
-            break
-        else:
-            ret, buffer=cv2.imencode('.jpg',frame)
-            frame=buffer.tobytes()
-
-        yield(b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+import matplotlib.pyplot as plt
 
 
-@app.route('/')
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+
+@app.route('/', methods=['POST', 'GET'])
 def index():
+    print("hello")
     return render_template('index.html')
 
-@app.route('/video')
-def video():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-if __name__=="__main__":
-    app.run(debug=True)
+@socketio.on('image')
+def image(data_image):
+    sbuf = StringIO()
+    sbuf.write(data_image)
+
+    # decode and convert into image
+    b = io.BytesIO(base64.b64decode(data_image))
+    try:
+        pimg = Image.open(b)
+        plt.imshow(np.array(pimg))
+        plt.show()
+    except:
+        pass
+
+
+if __name__ == '__main__':
+    socketio.run(app, host='127.0.0.1')
